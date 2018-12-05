@@ -4,6 +4,7 @@ class Api::TodosController < ApplicationController
   end
 
   def index
+    render json: Todo.all.where(user_id: current_user.id), include: :tags
   end
 
   def create
@@ -15,9 +16,24 @@ class Api::TodosController < ApplicationController
     end
   end
 
-  def update
+  def destroy
+    @todo = current_user.todos.find(params[:id])
+    @todo.destroy
+    render json: @todo, include: :tags
   end
 
-  def destroy
+  def update
+    @todo = Todo.find(params[:id])
+    if @todo.update(todo_params)
+      render json: @todo, include: :tags
+    else
+      render json: @todo.errors.full_messages, status: 422
+    end
+  end
+
+  private
+
+  def todo_params
+    params.require(:todo).permit(:title, :body, :done, tag_names: [])
   end
 end
